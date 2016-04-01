@@ -6,6 +6,7 @@ import (
 	"os"
 	"fmt"
 	"time"
+        "sync"
 )
 
 // This log writer sends output to a file
@@ -44,8 +45,14 @@ func (w *FileLogWriter) LogWrite(rec *LogRecord) {
 	w.rec <- rec
 }
 
+var lock = new(sync.Mutex)
+var cond = sync.NewCond(lock)
+
 func (w *FileLogWriter) Close() {
-	close(w.rec)
+    lock.Lock()
+    close(w.rec)
+    cond.Wait()        
+    lock.Unlock()
 }
 
 // NewFileLogWriter creates a new LogWriter which writes to the given file and
@@ -89,6 +96,7 @@ func NewFileLogWriter(fname string, rotate bool) *FileLogWriter {
 				}
 			case rec, ok := <-w.rec:
 				if !ok {
+                    			cond.Signal()
 					return
 				}
 				now := time.Now()
