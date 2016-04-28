@@ -244,6 +244,11 @@ func (w *FileLogWriter) SetRotate(rotate bool) *FileLogWriter {
 	return w
 }
 
+func (w *FileLogWriter) SetFilePrefix(prefix string) *FileLogWriter {
+	w.fileprefix =prefix 
+	return w
+}
+
 func (w *FileLogWriter) genFileName() string {
 	now := time.Now()
 	return fmt.Sprintf("%s%d%02d%02d.log", w.fileprefix, now.Year(), now.Month(), now.Day())
