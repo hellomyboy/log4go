@@ -15,7 +15,7 @@ type FileLogWriter struct {
 	rot chan bool
 
 	// The opened file
-    fileprefix string
+	fileprefix string
 	filename string
 	file     *os.File
 
