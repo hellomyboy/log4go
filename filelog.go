@@ -68,10 +68,13 @@ func NewFileLogWriter(fname string, rotate bool) *FileLogWriter {
 	w := &FileLogWriter{
 		rec:      make(chan *LogRecord, LogBufferLength),
 		rot:      make(chan bool),
-		filename: fname,
+		fileprefix: fname,
+		//filename: fname,
 		format:   "[%D %T] [%L] (%S) %M",
 		rotate:   rotate,
 	}
+	
+	w.filename = w.genFileName();
 
 	// open the file for the first time
 	if err := w.intRotate(); err != nil {
@@ -138,6 +141,8 @@ func (w *FileLogWriter) intRotate() error {
 		fmt.Fprint(w.file, FormatLogRecord(w.trailer, &LogRecord{Created: time.Now()}))
 		w.file.Close()
 	}
+	
+	now := time.Now()
 
 	// If we are keeping log files, move it to the next available number
 	if w.rotate {
@@ -161,6 +166,10 @@ func (w *FileLogWriter) intRotate() error {
 				return fmt.Errorf("Rotate: %s\n", err)
 			}
 		}
+		
+	} else if (w.daily) {
+		//for daily log output
+		w.filename = w.genFileName();
 	}
 
 	// Open the log file
@@ -169,8 +178,7 @@ func (w *FileLogWriter) intRotate() error {
 		return err
 	}
 	w.file = fd
-
-	now := time.Now()
+		
 	fmt.Fprint(w.file, FormatLogRecord(w.header, &LogRecord{Created: now}))
 
 	// Set the daily open date to the current date
@@ -233,6 +241,11 @@ func (w *FileLogWriter) SetRotate(rotate bool) *FileLogWriter {
 	//fmt.Fprintf(os.Stderr, "FileLogWriter.SetRotate: %v\n", rotate)
 	w.rotate = rotate
 	return w
+}
+
+func (w *FileLogWriter) genFileName() string {
+	now := time.Now()
+	return fmt.Sprintf("%s%d%02d%02d.log", w.fileprefix, now.Year(), now.Month(), now.Day())
 }
 
 // NewXMLLogWriter is a utility method for creating a FileLogWriter set up to
