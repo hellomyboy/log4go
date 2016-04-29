@@ -6,7 +6,8 @@ import (
 	"os"
 	"fmt"
 	"time"
-        "sync"
+    "strings"
+    "sync"
 )
 
 // This log writer sends output to a file
@@ -171,6 +172,11 @@ func (w *FileLogWriter) intRotate() error {
 	} else if (w.daily) {
 		//for daily log output
 		w.filename = w.genFileName();
+        idx := strings.LastIndex(w.filename, "/")
+        if idx > 0 {
+            dir := w.filename[:idx]
+            os.MkdirAll(dir, 0777)
+        }
 	}
 
 	// Open the log file
@@ -251,7 +257,13 @@ func (w *FileLogWriter) SetFilePrefix(prefix string) *FileLogWriter {
 
 func (w *FileLogWriter) genFileName() string {
 	now := time.Now()
-	return fmt.Sprintf("%s%d%02d%02d.log", w.fileprefix, now.Year(), now.Month(), now.Day())
+    w.filename = fmt.Sprintf("%s%d%02d%02d.log", w.fileprefix, now.Year(), now.Month(), now.Day())
+    idx := strings.LastIndex(w.filename, "/")
+    if idx > 0 {
+        dir := w.filename[:idx]
+        os.MkdirAll(dir, 0777)
+    }
+	return w.filename
 }
 
 // NewXMLLogWriter is a utility method for creating a FileLogWriter set up to
